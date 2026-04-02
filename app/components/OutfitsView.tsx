@@ -10,6 +10,7 @@ import OutfitDetailModal from './OutfitDetailModal';
 export default function OutfitsView() {
   const { outfits, items } = useApp();
   const [buildingOutfit, setBuildingOutfit] = useState(false);
+  const [editingOutfit, setEditingOutfit] = useState<Outfit | null>(null);
   const [selectedOutfit, setSelectedOutfit] = useState<Outfit | null>(null);
 
   // Quick suggestion: one from each main category
@@ -107,14 +108,24 @@ export default function OutfitsView() {
       )}
 
       {/* Modals */}
-      {buildingOutfit && (
-        <OutfitBuilderModal onClose={() => setBuildingOutfit(false)} />
+      {(buildingOutfit || editingOutfit) && (
+        <OutfitBuilderModal 
+          initialOutfit={editingOutfit}
+          onClose={() => {
+            setBuildingOutfit(false);
+            setEditingOutfit(null);
+          }} 
+        />
       )}
       {selectedOutfit && (
         <OutfitDetailModal
           outfit={selectedOutfit}
           items={items}
           onClose={() => setSelectedOutfit(null)}
+          onEdit={() => {
+            setEditingOutfit(selectedOutfit);
+            setSelectedOutfit(null);
+          }}
         />
       )}
     </div>

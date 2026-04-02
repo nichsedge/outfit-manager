@@ -1,13 +1,18 @@
 export type Category = 'top' | 'bottom' | 'shoes' | 'outerwear' | 'accessory' | 'bag';
 
-export type Tag = 'casual' | 'formal' | 'gym' | 'party' | 'work' | 'streetwear' | 'beach' | 'date';
+export interface CustomTag {
+  id: string;
+  label: string;
+}
+
+export const DEFAULT_TAG_NAMES = ['Casual', 'Formal', 'Gym', 'Party', 'Work', 'Streetwear', 'Beach', 'Date Night'];
 
 export interface ClothingItem {
   id: string;
   name: string;
   category: Category;
   color: string;
-  tags: Tag[];
+  tags: string[];
   images: string[]; // array of base64 data URLs
   createdAt: number;
   lastWornAt?: number; // legacy, keeping for compatibility during migration
@@ -35,16 +40,6 @@ export const CATEGORIES: { value: Category; label: string; emoji: string }[] = [
   { value: 'bag', label: 'Bag', emoji: '👜' },
 ];
 
-export const TAGS: { value: Tag; label: string }[] = [
-  { value: 'casual', label: 'Casual' },
-  { value: 'formal', label: 'Formal' },
-  { value: 'gym', label: 'Gym' },
-  { value: 'party', label: 'Party' },
-  { value: 'work', label: 'Work' },
-  { value: 'streetwear', label: 'Streetwear' },
-  { value: 'beach', label: 'Beach' },
-  { value: 'date', label: 'Date Night' },
-];
 
 export const COLORS = [
   { value: '#1a1a1a', label: 'Black' },

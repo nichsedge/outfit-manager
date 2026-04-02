@@ -5,6 +5,7 @@ import { useApp } from './components/AppProvider';
 import WardrobeView from './components/WardrobeView';
 import OutfitsView from './components/OutfitsView';
 import AddItemView from './components/AddItemView';
+import CalendarTab from './components/CalendarTab';
 import SettingsModal from './components/SettingsModal';
 import { ActiveTab } from './lib/types';
 
@@ -57,6 +58,7 @@ export default function Home() {
       <main style={{ flex: 1 }}>
         {activeTab === 'wardrobe' && <WardrobeView />}
         {activeTab === 'outfits' && <OutfitsView />}
+        {activeTab === 'calendar' && <CalendarTab />}
         {activeTab === 'add' && <AddItemView onDone={() => setActiveTab('wardrobe')} />}
       </main>
 
@@ -91,6 +93,15 @@ export default function Home() {
         >
           <span className="nav-btn__icon">✨</span>
           <span className="nav-btn__label">Outfits</span>
+        </button>
+
+        <button
+          id="nav-calendar"
+          className={`nav-btn ${activeTab === 'calendar' ? 'active' : ''}`}
+          onClick={() => setActiveTab('calendar')}
+        >
+          <span className="nav-btn__icon">📅</span>
+          <span className="nav-btn__label">Log</span>
         </button>
       </nav>
     </div>

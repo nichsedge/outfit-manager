@@ -3,19 +3,20 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useApp } from './AppProvider';
-import { ClothingItem, CATEGORIES, Category } from '../lib/types';
+import { ClothingItem, CATEGORIES, Category, Outfit } from '../lib/types';
 import ItemCard from './ItemCard';
 import Toast from './Toast';
 
 interface Props {
+  initialOutfit?: Outfit | null;
   onClose: () => void;
 }
 
-export default function OutfitBuilderModal({ onClose }: Props) {
-  const { items, addOutfit } = useApp();
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [name, setName] = useState('');
-  const [note, setNote] = useState('');
+export default function OutfitBuilderModal({ initialOutfit, onClose }: Props) {
+  const { items, addOutfit, updateOutfit } = useApp();
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialOutfit ? initialOutfit.itemIds : []);
+  const [name, setName] = useState(initialOutfit ? initialOutfit.name : '');
+  const [note, setNote] = useState(initialOutfit ? initialOutfit.note : '');
   const [filterCat, setFilterCat] = useState<Category | 'all'>('all');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
@@ -37,14 +38,26 @@ export default function OutfitBuilderModal({ onClose }: Props) {
   const handleSave = async () => {
     if (selectedIds.length < 2) return;
     setSaving(true);
-    await addOutfit({
-      id: uuidv4(),
-      name: name.trim() || `Outfit ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-      note: note.trim(),
-      itemIds: selectedIds,
-      createdAt: Date.now(),
-    });
-    setToast('✓ Outfit saved!');
+    
+    if (initialOutfit) {
+      await updateOutfit({
+        ...initialOutfit,
+        name: name.trim() || `Outfit ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        note: note.trim(),
+        itemIds: selectedIds,
+      });
+      setToast('✓ Outfit updated!');
+    } else {
+      await addOutfit({
+        id: uuidv4(),
+        name: name.trim() || `Outfit ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        note: note.trim(),
+        itemIds: selectedIds,
+        createdAt: Date.now(),
+      });
+      setToast('✓ Outfit saved!');
+    }
+    
     setTimeout(onClose, 800);
   };
 
@@ -57,7 +70,7 @@ export default function OutfitBuilderModal({ onClose }: Props) {
           onClick={e => e.stopPropagation()}
         >
           <div className="modal-header">
-            <span className="modal-title">Build Outfit</span>
+            <span className="modal-title">{initialOutfit ? 'Edit Outfit' : 'Build Outfit'}</span>
             <button id="builder-close" className="modal-close" onClick={onClose}>✕</button>
           </div>
 

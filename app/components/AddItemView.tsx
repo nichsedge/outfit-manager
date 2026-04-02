@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { ClothingItem, CATEGORIES, TAGS, COLORS, Category, Tag } from '../lib/types';
+import { ClothingItem, CATEGORIES, COLORS, Category } from '../lib/types';
 import { useApp } from './AppProvider';
 import Toast from './Toast';
 
@@ -11,13 +11,13 @@ interface Props {
 }
 
 export default function AddItemView({ onDone }: Props) {
-  const { addItem } = useApp();
+  const { addItem, tags: dynamicTags } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>([]);
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category | ''>('');
   const [color, setColor] = useState('#1a1a1a');
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
 
@@ -47,8 +47,8 @@ export default function AddItemView({ onDone }: Props) {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const toggleTag = (tag: Tag) => {
-    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  const toggleTag = (tagLabel: string) => {
+    setTags(prev => prev.includes(tagLabel) ? prev.filter(t => t !== tagLabel) : [...prev, tagLabel]);
   };
 
   const canSave = name.trim() && category;
@@ -252,12 +252,12 @@ export default function AddItemView({ onDone }: Props) {
       <div className="form-group">
         <label className="form-label">Style Tags <span style={{ color: 'var(--text-muted)' }}>(optional)</span></label>
         <div className="pill-group">
-          {TAGS.map(tag => (
+          {dynamicTags.map(tag => (
             <button
-              id={`tag-${tag.value}`}
-              key={tag.value}
-              className={`pill ${tags.includes(tag.value) ? 'active' : ''}`}
-              onClick={() => toggleTag(tag.value)}
+              id={`tag-${tag.id}`}
+              key={tag.id}
+              className={`pill ${tags.includes(tag.label) ? 'active' : ''}`}
+              onClick={() => toggleTag(tag.label)}
             >
               {tag.label}
             </button>

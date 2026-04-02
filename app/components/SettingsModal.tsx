@@ -3,24 +3,27 @@
 import { useState, useRef } from 'react';
 import { useApp } from './AppProvider';
 import Toast from './Toast';
+import TagsManagerModal from './TagsManagerModal';
 
 interface Props {
   onClose: () => void;
 }
 
 export default function SettingsModal({ onClose }: Props) {
-  const { items, outfits, restoreBackup } = useApp();
+  const { items, outfits, tags, restoreBackup } = useApp();
   const [toast, setToast] = useState('');
   const [restoring, setRestoring] = useState(false);
+  const [showTagsManager, setShowTagsManager] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleBackup = () => {
     try {
       const data = {
-        version: 1,
+        version: 2,
         timestamp: Date.now(),
         items,
         outfits,
+        tags,
       };
       
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -63,7 +66,7 @@ export default function SettingsModal({ onClose }: Props) {
         );
 
         if (confirmRestore) {
-          await restoreBackup(backup.items, backup.outfits || []);
+          await restoreBackup(backup.items, backup.outfits || [], backup.tags);
           setToast('✓ Restore complete!');
           setTimeout(onClose, 1000);
         }
@@ -115,6 +118,15 @@ export default function SettingsModal({ onClose }: Props) {
               >
                 📤 {restoring ? 'Restoring...' : 'Restore Wardrobe'}
               </button>
+
+              <button 
+                id="btn-manage-tags"
+                className="btn btn-ghost btn-full" 
+                onClick={() => setShowTagsManager(true)}
+                style={{ justifyContent: 'flex-start', paddingLeft: 'var(--space-4)' }}
+              >
+                🏷️ Manage Style Tags
+              </button>
               
               <input
                 ref={fileInputRef}
@@ -142,6 +154,7 @@ export default function SettingsModal({ onClose }: Props) {
         </div>
       </div>
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
+      {showTagsManager && <TagsManagerModal onClose={() => setShowTagsManager(false)} />}
     </>
   );
 }

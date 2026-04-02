@@ -9,9 +9,10 @@ interface Props {
   outfit: Outfit;
   items: ClothingItem[];
   onClose: () => void;
+  onEdit: () => void;
 }
 
-export default function OutfitDetailModal({ outfit, items, onClose }: Props) {
+export default function OutfitDetailModal({ outfit, items, onClose, onEdit }: Props) {
   const { deleteOutfit, updateOutfit } = useApp();
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState('');
@@ -129,6 +130,9 @@ export default function OutfitDetailModal({ outfit, items, onClose }: Props) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               <button id="btn-wear-outfit" className="btn btn-primary btn-full" onClick={handleWear}>
                 ✨ Wearing this today
+              </button>
+              <button id="btn-edit-outfit" className="btn btn-ghost btn-full" onClick={onEdit}>
+                ✏️ Edit outfit
               </button>
               <button
                 id="btn-delete-outfit"

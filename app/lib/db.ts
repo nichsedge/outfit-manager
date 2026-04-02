@@ -1,8 +1,9 @@
 import { openDB, IDBPDatabase } from 'idb';
-import { ClothingItem, Outfit } from './types';
+import { ClothingItem, Outfit, CustomTag, DEFAULT_TAG_NAMES } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 const DB_NAME = 'outfit-manager';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 type OutfitManagerDB = {
   items: {
@@ -14,6 +15,10 @@ type OutfitManagerDB = {
     key: string;
     value: Outfit;
     indexes: { byCreatedAt: number };
+  };
+  tags: {
+    key: string;
+    value: CustomTag;
   };
 };
 
@@ -32,10 +37,26 @@ function getDB() {
           const outfitStore = db.createObjectStore('outfits', { keyPath: 'id' });
           outfitStore.createIndex('byCreatedAt', 'createdAt');
         }
+        if (!db.objectStoreNames.contains('tags')) {
+          db.createObjectStore('tags', { keyPath: 'id' });
+        }
       },
     });
   }
   return dbPromise;
+}
+
+export async function seedTagsIfEmpty(): Promise<void> {
+  const db = await getDB();
+  const existing = await db.getAll('tags');
+  if (existing.length === 0) {
+    const tx = db.transaction('tags', 'readwrite');
+    const store = tx.objectStore('tags');
+    for (const name of DEFAULT_TAG_NAMES) {
+      await store.add({ id: uuidv4(), label: name });
+    }
+    await tx.done;
+  }
 }
 
 // Items
@@ -112,10 +133,32 @@ export async function deleteOutfit(id: string): Promise<void> {
   await db.delete('outfits', id);
 }
 
-// Backup & Restore
-export async function restoreFromBackup(items: ClothingItem[], outfits: Outfit[]): Promise<void> {
+// Tags
+export async function getAllTags(): Promise<CustomTag[]> {
   const db = await getDB();
-  const tx = db.transaction(['items', 'outfits'], 'readwrite');
+  return db.getAll('tags');
+}
+
+export async function addTag(tag: CustomTag): Promise<void> {
+  const db = await getDB();
+  await db.add('tags', tag);
+}
+
+export async function updateTag(tag: CustomTag): Promise<void> {
+  const db = await getDB();
+  await db.put('tags', tag);
+}
+
+export async function deleteTag(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('tags', id);
+}
+
+// Backup & Restore
+export async function restoreFromBackup(items: ClothingItem[], outfits: Outfit[], tags?: CustomTag[]): Promise<void> {
+  const db = await getDB();
+  const storeNames: Array<"items" | "outfits" | "tags"> = ['items', 'outfits', 'tags'];
+  const tx = db.transaction(storeNames, 'readwrite');
   
   // 1. Clear existing data
   await tx.objectStore('items').clear();
@@ -130,6 +173,14 @@ export async function restoreFromBackup(items: ClothingItem[], outfits: Outfit[]
   const outfitStore = tx.objectStore('outfits');
   for (const outfit of outfits) {
     await outfitStore.add(outfit);
+  }
+
+  if (tags) {
+    const tagStore = tx.objectStore('tags');
+    await tagStore.clear();
+    for (const tag of tags) {
+      await tagStore.add(tag);
+    }
   }
   
   await tx.done;

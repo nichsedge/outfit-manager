@@ -8,13 +8,16 @@ import ItemDetailModal from './ItemDetailModal';
 import { ClothingItem } from '../lib/types';
 
 export default function WardrobeView() {
-  const { items } = useApp();
+  const { items, tags } = useApp();
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+  const [activeTag, setActiveTag] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
 
-  const filtered = activeCategory === 'all'
-    ? items
-    : items.filter(i => i.category === activeCategory);
+  const filtered = items.filter(i => {
+    const matchCat = activeCategory === 'all' || i.category === activeCategory;
+    const matchTag = activeTag === 'all' || i.tags.includes(activeTag);
+    return matchCat && matchTag;
+  });
 
   return (
     <div className="page-content">
@@ -41,9 +44,9 @@ export default function WardrobeView() {
       )}
 
       {/* Filter */}
-      <div className="filter-bar">
+      <div className="filter-bar" style={{ marginBottom: 'var(--space-2)' }}>
         <button
-          id="filter-all"
+          id="filter-cat-all"
           className={`filter-chip ${activeCategory === 'all' ? 'active' : ''}`}
           onClick={() => setActiveCategory('all')}
         >
@@ -51,12 +54,32 @@ export default function WardrobeView() {
         </button>
         {CATEGORIES.map(cat => (
           <button
-            id={`filter-${cat.value}`}
+            id={`filter-cat-${cat.value}`}
             key={cat.value}
             className={`filter-chip ${activeCategory === cat.value ? 'active' : ''}`}
             onClick={() => setActiveCategory(cat.value)}
           >
             {cat.emoji} {cat.label}
+          </button>
+        ))}
+      </div>
+      
+      <div className="filter-bar">
+        <button
+          id="filter-tag-all"
+          className={`filter-chip ${activeTag === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveTag('all')}
+        >
+          🏷️ All Styles
+        </button>
+        {tags.map(tag => (
+          <button
+            id={`filter-tag-${tag.id}`}
+            key={tag.id}
+            className={`filter-chip ${activeTag === tag.label ? 'active' : ''}`}
+            onClick={() => setActiveTag(tag.label)}
+          >
+            {tag.label}
           </button>
         ))}
       </div>

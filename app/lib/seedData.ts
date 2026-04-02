@@ -28,19 +28,19 @@ const now = Date.now();
 
 export const DEFAULT_ITEMS: ClothingItem[] = [
   // Outerwear
-  { id: uuidv4(), name: 'Jaket Hitam',  category: 'outerwear', color: inferColor('Jaket Hitam'),  tags: ['casual'],    images: [], createdAt: now - 11 },
-  { id: uuidv4(), name: 'Jaket Navy',   category: 'outerwear', color: inferColor('Jaket Navy'),   tags: ['casual'],    images: [], createdAt: now - 10 },
-  { id: uuidv4(), name: 'Flannel Biru', category: 'outerwear', color: inferColor('Flannel Biru'), tags: ['casual', 'streetwear'], images: [], createdAt: now - 9 },
+  { id: uuidv4(), name: 'Jaket Hitam',  category: 'outerwear', color: inferColor('Jaket Hitam'),  tags: ['Casual'],    images: [], createdAt: now - 11 },
+  { id: uuidv4(), name: 'Jaket Navy',   category: 'outerwear', color: inferColor('Jaket Navy'),   tags: ['Casual'],    images: [], createdAt: now - 10 },
+  { id: uuidv4(), name: 'Flannel Biru', category: 'outerwear', color: inferColor('Flannel Biru'), tags: ['Casual', 'Streetwear'], images: [], createdAt: now - 9 },
 
   // Tops
-  { id: uuidv4(), name: 'Henley Coklat',   category: 'top', color: inferColor('Henley Coklat'),   tags: ['casual'],    images: [], createdAt: now - 8 },
-  { id: uuidv4(), name: 'Henley Biru',     category: 'top', color: inferColor('Henley Biru'),     tags: ['casual'],    images: [], createdAt: now - 7 },
-  { id: uuidv4(), name: 'Kaos Putih Misty',category: 'top', color: inferColor('Kaos Putih Misty'),tags: ['casual'],    images: [], createdAt: now - 6 },
-  { id: uuidv4(), name: 'Kaos Abu Misty',  category: 'top', color: inferColor('Kaos Abu Misty'),  tags: ['casual'],    images: [], createdAt: now - 5 },
+  { id: uuidv4(), name: 'Henley Coklat',   category: 'top', color: inferColor('Henley Coklat'),   tags: ['Casual'],    images: [], createdAt: now - 8 },
+  { id: uuidv4(), name: 'Henley Biru',     category: 'top', color: inferColor('Henley Biru'),     tags: ['Casual'],    images: [], createdAt: now - 7 },
+  { id: uuidv4(), name: 'Kaos Putih Misty',category: 'top', color: inferColor('Kaos Putih Misty'),tags: ['Casual'],    images: [], createdAt: now - 6 },
+  { id: uuidv4(), name: 'Kaos Abu Misty',  category: 'top', color: inferColor('Kaos Abu Misty'),  tags: ['Casual'],    images: [], createdAt: now - 5 },
 
   // Bottoms
-  { id: uuidv4(), name: 'Cino Cream', category: 'bottom', color: inferColor('Cino Cream'), tags: ['casual', 'formal'], images: [], createdAt: now - 4 },
-  { id: uuidv4(), name: 'Cino Hitam', category: 'bottom', color: inferColor('Cino Hitam'), tags: ['casual', 'formal'], images: [], createdAt: now - 3 },
-  { id: uuidv4(), name: 'Cino Abu',   category: 'bottom', color: inferColor('Cino Abu'),   tags: ['casual'],           images: [], createdAt: now - 2 },
-  { id: uuidv4(), name: 'Cino Mocca', category: 'bottom', color: inferColor('Cino Mocca'), tags: ['casual'],           images: [], createdAt: now - 1 },
+  { id: uuidv4(), name: 'Cino Cream', category: 'bottom', color: inferColor('Cino Cream'), tags: ['Casual', 'Formal'], images: [], createdAt: now - 4 },
+  { id: uuidv4(), name: 'Cino Hitam', category: 'bottom', color: inferColor('Cino Hitam'), tags: ['Casual', 'Formal'], images: [], createdAt: now - 3 },
+  { id: uuidv4(), name: 'Cino Abu',   category: 'bottom', color: inferColor('Cino Abu'),   tags: ['Casual'],           images: [], createdAt: now - 2 },
+  { id: uuidv4(), name: 'Cino Mocca', category: 'bottom', color: inferColor('Cino Mocca'), tags: ['Casual'],           images: [], createdAt: now - 1 },
 ];

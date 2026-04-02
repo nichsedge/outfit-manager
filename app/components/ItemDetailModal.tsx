@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { ClothingItem, CATEGORIES, COLORS } from '../lib/types';
 import { useApp } from './AppProvider';
 import Toast from './Toast';
+import DailyOutfitBuilder from './DailyOutfitBuilder';
 
 interface Props {
   item: ClothingItem;
@@ -15,6 +16,7 @@ export default function ItemDetailModal({ item, onClose }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showBuilder, setShowBuilder] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const category = CATEGORIES.find(c => c.value === item.category);
@@ -48,11 +50,13 @@ export default function ItemDetailModal({ item, onClose }: Props) {
     setTimeout(onClose, 500);
   };
 
-  const handleWear = async () => {
-    await updateItem({ ...item, lastWornAt: Date.now() });
-    setToast('✓ Marked as worn today!');
-    setTimeout(onClose, 1200);
+  const handleWear = () => {
+    setShowBuilder(true);
   };
+
+  if (showBuilder) {
+    return <DailyOutfitBuilder startingItem={item} onClose={onClose} />;
+  }
 
   return (
     <>
@@ -218,6 +222,13 @@ export default function ItemDetailModal({ item, onClose }: Props) {
                   </span>
                 </div>
               )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Times worn</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>
+                  {item.wearLogs ? item.wearLogs.length : (item.lastWornAt ? 1 : 0)}
+                </span>
+              </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Added</span>
