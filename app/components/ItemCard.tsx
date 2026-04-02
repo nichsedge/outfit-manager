@@ -1,0 +1,61 @@
+'use client';
+
+import { ClothingItem, CATEGORIES } from '../lib/types';
+
+interface Props {
+  item: ClothingItem;
+  onClick?: () => void;
+  selected?: boolean;
+  onSelect?: () => void;
+  selectable?: boolean;
+}
+
+export default function ItemCard({ item, onClick, selected, onSelect, selectable }: Props) {
+  const category = CATEGORIES.find(c => c.value === item.category);
+
+  const handleClick = () => {
+    if (selectable && onSelect) {
+      onSelect();
+    } else if (onClick) {
+      onClick();
+    }
+  };
+
+  return (
+    <div
+      id={`item-card-${item.id}`}
+      className={`item-card ${selected ? 'selected' : ''}`}
+      onClick={handleClick}
+      role="button"
+      aria-pressed={selected}
+    >
+      {item.images && item.images.length > 0 ? (
+        <img
+          src={item.images[0]}
+          alt={item.name}
+          className="item-card__image"
+          loading="lazy"
+        />
+      ) : (
+        <div className="item-card__image-placeholder">
+          {category?.emoji || '👕'}
+        </div>
+      )}
+
+      <div className="item-card__body">
+        <div className="item-card__name">{item.name}</div>
+        <div className="item-card__meta">
+          <div
+            className="item-card__color-dot"
+            style={{ backgroundColor: item.color }}
+          />
+          <span className="item-card__category">{item.category}</span>
+        </div>
+      </div>
+
+      {selectable && (
+        <div className="item-card__check">✓</div>
+      )}
+    </div>
+  );
+}
