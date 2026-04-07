@@ -17,7 +17,10 @@ export default function ItemDetailModal({ item, onClose }: Props) {
   const [toast, setToast] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(item.name);
   const fileRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const category = CATEGORIES.find(c => c.value === item.category);
   const colorInfo = COLORS.find(c => c.value === item.color);
@@ -50,8 +53,26 @@ export default function ItemDetailModal({ item, onClose }: Props) {
     setTimeout(onClose, 500);
   };
 
+  const handleDeleteImage = async (idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedImages = (item.images || []).filter((_, i) => i !== idx);
+    await updateItem({ ...item, images: updatedImages });
+    setToast('✓ Photo removed');
+  };
+
   const handleWear = () => {
     setShowBuilder(true);
+  };
+  
+  const handleSaveName = async () => {
+    if (!nameInput.trim()) {
+      setNameInput(item.name);
+      setEditingName(false);
+      return;
+    }
+    await updateItem({ ...item, name: nameInput.trim() });
+    setEditingName(false);
+    setToast('✓ Item renamed');
   };
 
   if (showBuilder) {
@@ -63,7 +84,37 @@ export default function ItemDetailModal({ item, onClose }: Props) {
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-sheet animate-scale" onClick={e => e.stopPropagation()}>
           <div className="modal-header">
-            <span className="modal-title">{item.name}</span>
+            {editingName ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  className="form-input"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onBlur={handleSaveName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveName();
+                    if (e.key === 'Escape') {
+                      setNameInput(item.name);
+                      setEditingName(false);
+                    }
+                  }}
+                  autoFocus
+                  style={{ height: 32, padding: '4px 8px', fontSize: 16 }}
+                />
+              </div>
+            ) : (
+              <span 
+                className="modal-title" 
+                onClick={() => setEditingName(true)}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                title="Edit name"
+              >
+                {item.name}
+                <span style={{ fontSize: 12, opacity: 0.5 }}>✏️</span>
+              </span>
+            )}
             <button id="modal-close" className="modal-close" onClick={onClose}>✕</button>
           </div>
           <div className="modal-body">
@@ -112,6 +163,13 @@ export default function ItemDetailModal({ item, onClose }: Props) {
                         className="item-detail__image"
                         style={{ margin: 0 }}
                       />
+                      <button
+                        className="item-detail__delete-photo"
+                        onClick={(e) => handleDeleteImage(idx, e)}
+                        title="Delete photo"
+                      >
+                        ✕
+                      </button>
                       {item.images && item.images.length > 1 && (
                         <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 8px', borderRadius: 'var(--radius-pill)', fontSize: 11, fontWeight: 700, pointerEvents: 'none' }}>
                           {idx + 1} / {item.images.length}

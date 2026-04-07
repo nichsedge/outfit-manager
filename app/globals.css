@@ -808,6 +808,36 @@ body {
   background: var(--bg-3);
 }
 
+.item-detail__delete-photo {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 71, 87, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.item-detail__delete-photo:hover {
+  background: var(--danger);
+  transform: scale(1.1);
+}
+
+.item-detail__delete-photo:active {
+  transform: scale(0.9);
+}
+
 .item-detail__image-wrapper:hover .item-photo-overlay,
 .item-detail__image-wrapper:active .item-photo-overlay {
   opacity: 1;
