@@ -7,6 +7,10 @@ export interface CustomTag {
 
 export const DEFAULT_TAG_NAMES = ['Casual', 'Formal', 'Gym', 'Party', 'Work', 'Streetwear', 'Beach', 'Date Night'];
 
+export type ItemStatus = 'ready' | 'dirty' | 'cleaning';
+
+export type ItemCondition = 'new' | 'excellent' | 'good' | 'fair' | 'poor' | 'needs-repair' | 'retired';
+
 export interface ClothingItem {
   id: string;
   name: string;
@@ -17,6 +21,13 @@ export interface ClothingItem {
   createdAt: number;
   lastWornAt?: number; // legacy, keeping for compatibility during migration
   wearLogs?: number[]; // array of timestamps when worn
+  brand?: string;
+  price?: number;
+  purchaseDate?: number;
+  status: ItemStatus;
+  material?: string;
+  careInstructions?: string;
+  condition?: ItemCondition;
 }
 
 export interface Outfit {
@@ -27,6 +38,19 @@ export interface Outfit {
   createdAt: number;
   lastWornAt?: number; // legacy
   wearLogs?: number[];
+}
+
+export interface PlannedOutfit {
+  id: string;
+  date: string; // YYYY-MM-DD
+  outfitId?: string;
+  itemIds: string[];
+  note?: string;
+  weather?: {
+    temp?: number;
+    icon?: string;
+    description?: string;
+  };
 }
 
 export type ActiveTab = 'wardrobe' | 'outfits' | 'calendar' | 'add' | 'insights';

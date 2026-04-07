@@ -13,12 +13,31 @@ export default function OutfitsView() {
   const [editingOutfit, setEditingOutfit] = useState<Outfit | null>(null);
   const [selectedOutfit, setSelectedOutfit] = useState<Outfit | null>(null);
 
-  // Quick suggestion: one from each main category
+  // Improved suggestion: pick a random item from each core category,
+  // prioritizing items worn less recently.
   const getSuggestion = () => {
-    const top = items.filter(i => i.category === 'top')[0];
-    const bottom = items.filter(i => i.category === 'bottom')[0];
-    const shoes = items.filter(i => i.category === 'shoes')[0];
-    return [top, bottom, shoes].filter(Boolean) as ClothingItem[];
+    const categories: ('top' | 'bottom' | 'shoes')[] = ['top', 'bottom', 'shoes'];
+    const result: ClothingItem[] = [];
+
+    categories.forEach(cat => {
+      const candidates = items.filter(i => i.category === cat);
+      if (candidates.length > 0) {
+        // Sort by last worn date (oldest first or never worn)
+        const sorted = [...candidates].sort((a, b) => {
+          const aLogs = a.wearLogs || (a.lastWornAt ? [a.lastWornAt] : []);
+          const bLogs = b.wearLogs || (b.lastWornAt ? [b.lastWornAt] : []);
+          const aLast = aLogs.length > 0 ? Math.max(...aLogs) : 0;
+          const bLast = bLogs.length > 0 ? Math.max(...bLogs) : 0;
+          return aLast - bLast;
+        });
+        
+        // Take one from the top few (randomize slightly among least worn)
+        const pool = sorted.slice(0, Math.min(3, sorted.length));
+        result.push(pool[Math.floor(Math.random() * pool.length)]);
+      }
+    });
+
+    return result;
   };
 
   const suggestion = getSuggestion();

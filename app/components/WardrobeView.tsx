@@ -12,25 +12,70 @@ export default function WardrobeView() {
   const { items, tags } = useApp();
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   const [activeTag, setActiveTag] = useState<string>('all');
+  const [activeStatus, setActiveStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  
+  // Batch Selection
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { updateItem } = useApp();
 
   const filtered = items.filter(i => {
     const matchCat = activeCategory === 'all' || i.category === activeCategory;
     const matchTag = activeTag === 'all' || i.tags.includes(activeTag);
+    const matchStatus = activeStatus === 'all' || i.status === activeStatus;
     const matchSearch = !searchQuery || 
       i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      i.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      i.material?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       i.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    return matchCat && matchTag && matchSearch;
+    return matchCat && matchTag && matchStatus && matchSearch;
   });
+
+  const toggleSelection = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleBatchStatus = async (status: ClothingItem['status']) => {
+    const itemsToUpdate = items.filter(i => selectedIds.has(i.id));
+    await Promise.all(itemsToUpdate.map(i => updateItem({ ...i, status })));
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchTag = async (tag: string) => {
+    const itemsToUpdate = items.filter(i => selectedIds.has(i.id));
+    await Promise.all(itemsToUpdate.map(i => {
+      if (i.tags.includes(tag)) return Promise.resolve();
+      return updateItem({ ...i, tags: [...i.tags, tag] });
+    }));
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
 
   return (
     <div className="page-content">
       {/* Header with Search and Toggle */}
-      <div className="section-header">
-        <h2 className="section-title">Wardrobe</h2>
-        <span className="section-count">{items.length}</span>
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <h2 className="section-title">Wardrobe</h2>
+          <span className="section-count">{items.length}</span>
+        </div>
+        <button 
+          className={`btn ${selectionMode ? 'btn-primary' : 'btn-ghost'}`} 
+          style={{ padding: '4px 12px', fontSize: 13, height: 'auto', minHeight: 'auto' }}
+          onClick={() => {
+            setSelectionMode(!selectionMode);
+            setSelectedIds(new Set());
+          }}
+        >
+          {selectionMode ? 'Done' : 'Select'}
+        </button>
       </div>
 
 
@@ -118,6 +163,37 @@ export default function WardrobeView() {
         ))}
       </div>
 
+      <div className="filter-bar">
+        <button
+          id="filter-status-all"
+          className={`filter-chip ${activeStatus === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveStatus('all')}
+        >
+          ✨ All Status
+        </button>
+        <button
+          id="filter-status-ready"
+          className={`filter-chip ${activeStatus === 'ready' ? 'active' : ''}`}
+          onClick={() => setActiveStatus('ready')}
+        >
+          ✅ Ready
+        </button>
+        <button
+          id="filter-status-dirty"
+          className={`filter-chip ${activeStatus === 'dirty' ? 'active' : ''}`}
+          onClick={() => setActiveStatus('dirty')}
+        >
+          🧺 Dirty
+        </button>
+        <button
+          id="filter-status-cleaning"
+          className={`filter-chip ${activeStatus === 'cleaning' ? 'active' : ''}`}
+          onClick={() => setActiveStatus('cleaning')}
+        >
+          🧼 Cleaning
+        </button>
+      </div>
+
       {/* Grid */}
       {items.length === 0 ? (
         <div className="empty-state animate-in">
@@ -136,15 +212,35 @@ export default function WardrobeView() {
           </div>
         </div>
       ) : (
-        <div className="item-grid animate-in">
-          {filtered.map(item => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onClick={() => setSelectedItem(item)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="item-grid animate-in">
+            {filtered.map(item => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onClick={() => selectionMode ? toggleSelection(item.id) : setSelectedItem(item)}
+                selectable={selectionMode}
+                selected={selectedIds.has(item.id)}
+                onSelect={() => toggleSelection(item.id)}
+              />
+            ))}
+          </div>
+
+          {selectionMode && selectedIds.size > 0 && (
+            <div className="batch-actions-bar animate-slide-up">
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'white', marginBottom: 'var(--space-2)' }}>
+                {selectedIds.size} items selected
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', overflowX: 'auto', paddingBottom: 4 }}>
+                <button className="btn btn-ghost" style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', fontSize: 11, border: 'none' }} onClick={() => handleBatchStatus('ready')}>✅ Set Ready</button>
+                <button className="btn btn-ghost" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontSize: 11, border: 'none' }} onClick={() => handleBatchStatus('dirty')}>🧺 Set Dirty</button>
+                {tags.slice(0, 5).map(tag => (
+                  <button key={tag.id} className="btn btn-ghost" style={{ background: 'rgba(255,255,255,0.1)', fontSize: 11, border: 'none' }} onClick={() => handleBatchTag(tag.label)}>🏷️ +{tag.label}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Item Detail Modal */}

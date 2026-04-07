@@ -1,9 +1,9 @@
 import { openDB, IDBPDatabase } from 'idb';
-import { ClothingItem, Outfit, CustomTag, DEFAULT_TAG_NAMES } from './types';
+import { ClothingItem, Outfit, CustomTag, DEFAULT_TAG_NAMES, PlannedOutfit, Trip } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 const DB_NAME = 'outfit-manager';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 type OutfitManagerDB = {
   items: {
@@ -20,6 +20,15 @@ type OutfitManagerDB = {
     key: string;
     value: CustomTag;
   };
+  plans: {
+    key: string;
+    value: PlannedOutfit;
+    indexes: { byDate: string };
+  };
+  trips: {
+    key: string;
+    value: Trip;
+  };
 };
 
 let dbPromise: Promise<IDBPDatabase<OutfitManagerDB>> | null = null;
@@ -27,18 +36,26 @@ let dbPromise: Promise<IDBPDatabase<OutfitManagerDB>> | null = null;
 function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<OutfitManagerDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('items')) {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
           const itemStore = db.createObjectStore('items', { keyPath: 'id' });
           itemStore.createIndex('byCategory', 'category');
           itemStore.createIndex('byCreatedAt', 'createdAt');
-        }
-        if (!db.objectStoreNames.contains('outfits')) {
+          
           const outfitStore = db.createObjectStore('outfits', { keyPath: 'id' });
           outfitStore.createIndex('byCreatedAt', 'createdAt');
-        }
-        if (!db.objectStoreNames.contains('tags')) {
+          
           db.createObjectStore('tags', { keyPath: 'id' });
+        }
+        
+        if (oldVersion < 3) {
+          if (!db.objectStoreNames.contains('plans')) {
+            const planStore = db.createObjectStore('plans', { keyPath: 'id' });
+            planStore.createIndex('byDate', 'date');
+          }
+          if (!db.objectStoreNames.contains('trips')) {
+            db.createObjectStore('trips', { keyPath: 'id' });
+          }
         }
       },
     });
@@ -61,20 +78,38 @@ export async function seedTagsIfEmpty(): Promise<void> {
 
 // Items
 function migrateItem(raw: any): ClothingItem {
-  if (raw && typeof raw.imageData === 'string') {
+  if (!raw) return raw;
+  
+  if (typeof raw.imageData === 'string') {
     raw.images = raw.imageData ? [raw.imageData] : [];
     delete raw.imageData;
   }
-  if (raw && raw.lastWornAt && !raw.wearLogs) {
+  if (raw.lastWornAt && !raw.wearLogs) {
     raw.wearLogs = [raw.lastWornAt];
   }
+  if (!raw.status) {
+    raw.status = 'ready';
+  }
+  if (raw.brand === undefined) raw.brand = '';
+  if (!raw.wearLogs) raw.wearLogs = [];
+  if (!raw.images) raw.images = [];
+  if (!raw.tags) raw.tags = [];
+  
+  // New fields
+  if (!raw.condition) raw.condition = 'good';
+  if (raw.material === undefined) raw.material = '';
+  if (raw.careInstructions === undefined) raw.careInstructions = '';
+  
   return raw as ClothingItem;
 }
 
 function migrateOutfit(raw: any): Outfit {
-  if (raw && raw.lastWornAt && !raw.wearLogs) {
+  if (!raw) return raw;
+  if (raw.lastWornAt && !raw.wearLogs) {
     raw.wearLogs = [raw.lastWornAt];
   }
+  if (!raw.wearLogs) raw.wearLogs = [];
+  if (!raw.itemIds) raw.itemIds = [];
   return raw as Outfit;
 }
 
@@ -133,6 +168,48 @@ export async function deleteOutfit(id: string): Promise<void> {
   await db.delete('outfits', id);
 }
 
+// Plans
+export async function getAllPlans(): Promise<PlannedOutfit[]> {
+  const db = await getDB();
+  return db.getAll('plans');
+}
+
+export async function addPlan(plan: PlannedOutfit): Promise<void> {
+  const db = await getDB();
+  await db.add('plans', plan);
+}
+
+export async function updatePlan(plan: PlannedOutfit): Promise<void> {
+  const db = await getDB();
+  await db.put('plans', plan);
+}
+
+export async function deletePlan(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('plans', id);
+}
+
+// Trips
+export async function getAllTrips(): Promise<Trip[]> {
+  const db = await getDB();
+  return db.getAll('trips');
+}
+
+export async function addTrip(trip: Trip): Promise<void> {
+  const db = await getDB();
+  await db.add('trips', trip);
+}
+
+export async function updateTrip(trip: Trip): Promise<void> {
+  const db = await getDB();
+  await db.put('trips', trip);
+}
+
+export async function deleteTrip(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('trips', id);
+}
+
 // Tags
 export async function getAllTags(): Promise<CustomTag[]> {
   const db = await getDB();
@@ -167,12 +244,12 @@ export async function restoreFromBackup(items: ClothingItem[], outfits: Outfit[]
   // 2. Add new data from backup
   const itemStore = tx.objectStore('items');
   for (const item of items) {
-    await itemStore.add(item);
+    await itemStore.add(migrateItem(item));
   }
   
   const outfitStore = tx.objectStore('outfits');
   for (const outfit of outfits) {
-    await outfitStore.add(outfit);
+    await outfitStore.add(migrateOutfit(outfit));
   }
 
   if (tags) {

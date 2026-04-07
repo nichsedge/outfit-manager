@@ -7,8 +7,10 @@ import ItemDetailModal from './ItemDetailModal';
 
 // Group logic
 export default function CalendarTab() {
-  const { items, outfits } = useApp();
+  const { items, outfits, plans, addPlan, deletePlan } = useApp();
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [planDate, setPlanDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Group by date string: YYYY-MM-DD
   const days = useMemo(() => {
@@ -49,29 +51,71 @@ export default function CalendarTab() {
       });
     });
 
+    // 3. Collect all plans
+    plans.forEach(plan => {
+      const key = plan.date; // YYYY-MM-DD
+      if (!map[key]) {
+        // Use midday to avoid timezone issues when converting YYYY-MM-DD to Date
+        map[key] = { dateObj: new Date(key + 'T12:00:00'), outfits: [], items: [] };
+      }
+      
+      if (plan.outfitId) {
+        const outfit = outfits.find(o => o.id === plan.outfitId);
+        if (outfit && !map[key].outfits.find(o => o.id === outfit.id)) {
+          map[key].outfits.push(outfit);
+        }
+      }
+      
+      plan.itemIds.forEach(itemId => {
+        const item = items.find(i => i.id === itemId);
+        if (item) {
+          const isInOutfitToday = map[key].outfits.some(o => o.itemIds.includes(item.id));
+          if (!isInOutfitToday && !map[key].items.find(i => i.id === item.id)) {
+            map[key].items.push(item);
+          }
+        }
+      });
+    });
+
     // Convert map to sorted array (newest first)
     return Object.entries(map)
       .map(([key, data]) => ({ key, ...data }))
       .sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime());
-  }, [items, outfits]);
+  }, [items, outfits, plans]);
 
   const formatDateLabel = (dateObj: Date) => {
     const today = new Date();
-    const isToday = today.toDateString() === dateObj.toDateString();
+    today.setHours(0,0,0,0);
+    const d = new Date(dateObj);
+    d.setHours(0,0,0,0);
+
+    const isToday = today.getTime() === d.getTime();
     
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = yesterday.toDateString() === dateObj.toDateString();
+    const isYesterday = yesterday.getTime() === d.getTime();
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = tomorrow.getTime() === d.getTime();
 
     if (isToday) return 'Today';
     if (isYesterday) return 'Yesterday';
+    if (isTomorrow) return 'Tomorrow';
     return dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   };
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="section-header">
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
         <h1 className="section-title">Style Log</h1>
+        <button 
+          className="btn btn-primary" 
+          style={{ padding: '4px 12px', fontSize: 13, height: 'auto', minHeight: 'auto' }}
+          onClick={() => setIsPlanning(true)}
+        >
+          📅 Plan Outfit
+        </button>
       </div>
 
       {days.length === 0 ? (
@@ -92,9 +136,15 @@ export default function CalendarTab() {
                 paddingBottom: 'var(--space-2)',
                 marginBottom: 'var(--space-4)',
                 textTransform: 'uppercase',
-                letterSpacing: 0.5
+                letterSpacing: 0.5,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}>
-                {formatDateLabel(day.dateObj)}
+                <span>{formatDateLabel(day.dateObj)}</span>
+                {day.dateObj.getTime() > Date.now() && (
+                  <span style={{ fontSize: 10, color: 'var(--accent)', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 8px', borderRadius: 4 }}>PLANNED</span>
+                )}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
@@ -164,6 +214,40 @@ export default function CalendarTab() {
           item={items.find(i => i.id === selectedItem.id) || selectedItem} 
           onClose={() => setSelectedItem(null)} 
         />
+      )}
+
+      {isPlanning && (
+        <div className="modal-overlay" onClick={() => setIsPlanning(false)}>
+          <div className="modal-sheet animate-scale" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <span className="modal-title">Plan an Outfit</span>
+              <button className="modal-close" onClick={() => setIsPlanning(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Date</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  value={planDate} 
+                  onChange={e => setPlanDate(e.target.value)} 
+                />
+              </div>
+              
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+                To plan an outfit, go to the <b>Outfits</b> tab and select a future date when logging, or pick items from there. 
+                This view shows what you've planned across your calendar.
+              </p>
+
+              <button 
+                className="btn btn-primary btn-full" 
+                onClick={() => setIsPlanning(false)}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

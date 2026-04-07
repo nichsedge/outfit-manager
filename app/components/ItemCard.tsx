@@ -29,6 +29,21 @@ export default function ItemCard({ item, onClick, selected, onSelect, selectable
       role="button"
       aria-pressed={selected}
     >
+      {item.status !== 'ready' && (
+        <div className={`item-card__status-badge ${item.status}`}>
+          {item.status === 'dirty' ? '🧺' : '🧼'}
+        </div>
+      )}
+
+      {(item.condition === 'poor' || item.condition === 'needs-repair') && (
+        <div 
+          className="item-card__condition-badge"
+          title={item.condition === 'poor' ? 'Poor condition' : 'Needs repair'}
+        >
+          {item.condition === 'poor' ? '⚠️' : '🛠️'}
+        </div>
+      )}
+
       {item.images && item.images.length > 0 ? (
         <img
           src={item.images[0]}

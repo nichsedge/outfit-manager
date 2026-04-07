@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { ClothingItem, Outfit, CustomTag } from '../lib/types';
+import { ClothingItem, Outfit, CustomTag, PlannedOutfit } from '../lib/types';
 import * as db from '../lib/db';
 import { DEFAULT_ITEMS } from '../lib/seedData';
 
@@ -9,16 +9,21 @@ interface AppState {
   items: ClothingItem[];
   outfits: Outfit[];
   tags: CustomTag[];
+  plans: PlannedOutfit[];
   loading: boolean;
   refreshItems: () => Promise<void>;
   refreshOutfits: () => Promise<void>;
   refreshTags: () => Promise<void>;
+  refreshPlans: () => Promise<void>;
   addItem: (item: ClothingItem) => Promise<void>;
   updateItem: (item: ClothingItem) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   addOutfit: (outfit: Outfit) => Promise<void>;
   updateOutfit: (outfit: Outfit) => Promise<void>;
   deleteOutfit: (id: string) => Promise<void>;
+  addPlan: (plan: PlannedOutfit) => Promise<void>;
+  updatePlan: (plan: PlannedOutfit) => Promise<void>;
+  deletePlan: (id: string) => Promise<void>;
   addTag: (tag: CustomTag) => Promise<void>;
   updateTag: (tag: CustomTag, oldLabel: string) => Promise<void>;
   deleteTag: (id: string, label: string) => Promise<void>;
@@ -33,6 +38,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [outfits, setOutfits] = useState<Outfit[]>([]);
   const [tags, setTags] = useState<CustomTag[]>([]);
+  const [plans, setPlans] = useState<PlannedOutfit[]>([]);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
@@ -49,6 +55,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const refreshTags = useCallback(async () => {
     const all = await db.getAllTags();
     setTags(all.sort((a, b) => a.label.localeCompare(b.label)));
+  }, []);
+
+  const refreshPlans = useCallback(async () => {
+    const all = await db.getAllPlans();
+    setPlans(all.sort((a, b) => a.date.localeCompare(b.date)));
   }, []);
 
   useEffect(() => {
@@ -68,11 +79,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         await Promise.all(DEFAULT_ITEMS.map(item => db.addItem(item)));
       }
       await db.seedTagsIfEmpty();
-      await Promise.all([refreshItems(), refreshOutfits(), refreshTags()]);
+      await Promise.all([refreshItems(), refreshOutfits(), refreshTags(), refreshPlans()]);
       setLoading(false);
     };
     init();
-  }, [refreshItems, refreshOutfits]);
+  }, [refreshItems, refreshOutfits, refreshTags, refreshPlans]);
 
   const toggleTheme = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -110,6 +121,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await db.deleteOutfit(id);
     await refreshOutfits();
   }, [refreshOutfits]);
+
+  const addPlan = useCallback(async (plan: PlannedOutfit) => {
+    await db.addPlan(plan);
+    await refreshPlans();
+  }, [refreshPlans]);
+
+  const updatePlan = useCallback(async (plan: PlannedOutfit) => {
+    await db.updatePlan(plan);
+    await refreshPlans();
+  }, [refreshPlans]);
+
+  const deletePlan = useCallback(async (id: string) => {
+    await db.deletePlan(id);
+    await refreshPlans();
+  }, [refreshPlans]);
 
   const addTag = useCallback(async (tag: CustomTag) => {
     await db.addTag(tag);
@@ -153,10 +179,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      items, outfits, tags, loading,
-      refreshItems, refreshOutfits, refreshTags,
+      items, outfits, tags, plans, loading,
+      refreshItems, refreshOutfits, refreshTags, refreshPlans,
       addItem, updateItem, deleteItem,
       addOutfit, updateOutfit, deleteOutfit,
+      addPlan, updatePlan, deletePlan,
       addTag, updateTag, deleteTag,
       restoreBackup,
       theme,

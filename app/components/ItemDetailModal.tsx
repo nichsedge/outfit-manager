@@ -19,6 +19,10 @@ export default function ItemDetailModal({ item, onClose }: Props) {
   const [editingName, setEditingName] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [nameInput, setNameInput] = useState(item.name);
+  const [editingMaterial, setEditingMaterial] = useState(false);
+  const [materialInput, setMaterialInput] = useState(item.material || '');
+  const [editingCare, setEditingCare] = useState(false);
+  const [careInput, setCareInput] = useState(item.careInstructions || '');
   const { deleteItem, updateItem, tags: dynamicTags } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +88,29 @@ export default function ItemDetailModal({ item, onClose }: Props) {
     
     await updateItem({ ...item, tags: updatedTags });
     setToast(isActive ? `− Tag removed: ${label}` : `+ Tag added: ${label}`);
+  };
+
+  const handleSaveMaterial = async () => {
+    await updateItem({ ...item, material: materialInput.trim() || undefined });
+    setEditingMaterial(false);
+    setToast('✓ Material updated');
+  };
+
+  const handleSaveCare = async () => {
+    await updateItem({ ...item, careInstructions: careInput.trim() || undefined });
+    setEditingCare(false);
+    setToast('✓ Care instructions updated');
+  };
+
+  const cycleCondition = async () => {
+    const conditions: Array<'new' | 'excellent' | 'good' | 'fair' | 'poor' | 'needs-repair'> = ['new', 'excellent', 'good', 'fair', 'poor', 'needs-repair'];
+    const currentIdx = conditions.indexOf(item.condition as any || 'good');
+    const nextIdx = (currentIdx + 1) % conditions.length;
+    const nextCondition = conditions[nextIdx];
+    if (nextCondition) {
+      await updateItem({ ...item, condition: nextCondition as any });
+      setToast(`Condition: ${nextCondition.toUpperCase().replace('-', ' ')}`);
+    }
   };
 
   if (showBuilder) {
@@ -246,6 +273,11 @@ export default function ItemDetailModal({ item, onClose }: Props) {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Brand</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{item.brand || '—'}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Color</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div 
@@ -283,11 +315,116 @@ export default function ItemDetailModal({ item, onClose }: Props) {
                 </div>
               </div>
 
-              {item.lastWornAt && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Status</span>
+                <button 
+                  className={`status-badge ${item.status}`}
+                  onClick={async () => {
+                    const nextStatus = item.status === 'ready' ? 'dirty' : (item.status === 'dirty' ? 'cleaning' : 'ready');
+                    await updateItem({ ...item, status: nextStatus });
+                    setToast(`Status: ${nextStatus.toUpperCase()}`);
+                  }}
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: item.status === 'ready' ? 'rgba(34, 197, 94, 0.2)' : (item.status === 'dirty' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)'),
+                    color: item.status === 'ready' ? '#22c55e' : (item.status === 'dirty' ? '#ef4444' : '#3b82f6')
+                  }}
+                >
+                  {item.status}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Condition</span>
+                <button 
+                  onClick={cycleCondition}
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    border: '1px solid currentColor',
+                    background: 'none',
+                    color: (item.condition === 'new' || item.condition === 'excellent') ? '#22c55e' : 
+                           (item.condition === 'poor' || item.condition === 'needs-repair') ? '#ef4444' : 'var(--text-secondary)'
+                  }}
+                >
+                  {item.condition?.replace('-', ' ') || 'good'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Material</span>
+                {editingMaterial ? (
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={materialInput}
+                    onChange={(e) => setMaterialInput(e.target.value)}
+                    onBlur={handleSaveMaterial}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveMaterial()}
+                    autoFocus
+                    style={{ height: 24, padding: '0 4px', fontSize: 13, width: '60%', textAlign: 'right' }}
+                  />
+                ) : (
+                  <span 
+                    style={{ fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+                    onClick={() => setEditingMaterial(true)}
+                  >
+                    {item.material || 'Set material'}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Care Info</span>
+                {editingCare ? (
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={careInput}
+                    onChange={(e) => setCareInput(e.target.value)}
+                    onBlur={handleSaveCare}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveCare()}
+                    autoFocus
+                    style={{ height: 24, padding: '0 4px', fontSize: 13, width: '60%', textAlign: 'right' }}
+                  />
+                ) : (
+                  <span 
+                    style={{ fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+                    onClick={() => setEditingCare(true)}
+                  >
+                    {item.careInstructions || 'Set care info'}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
+                <div style={{ padding: 'var(--space-3)', background: 'var(--bg-3)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>Price</div>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>{item.price ? `$${item.price.toFixed(2)}` : '—'}</div>
+                </div>
+                <div style={{ padding: 'var(--space-3)', background: 'var(--bg-3)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ color: 'var(--accent)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>Cost per Wear</div>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>
+                    {item.price ? `$${(item.price / (Math.max(1, (item.wearLogs?.length || 0)))).toFixed(2)}` : '—'}
+                  </div>
+                </div>
+              </div>
+
+              {item.purchaseDate && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Last worn</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Purchased</span>
                   <span style={{ fontWeight: 600, fontSize: 14 }}>
-                    {new Date(item.lastWornAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(item.purchaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
               )}
@@ -359,6 +496,12 @@ export default function ItemDetailModal({ item, onClose }: Props) {
                 disabled={uploadingPhoto || (item.images && item.images.length >= 5)}
               >
                 📷 {item.images && item.images.length >= 5 ? 'Max photos reached' : 'Add another photo'}
+              </button>
+              <button 
+                className="btn btn-ghost btn-full" 
+                onClick={() => setToast('✨ AI Background removal coming soon!')}
+              >
+                🪄 Remove Background (AI)
               </button>
               <button id="btn-wear-today" className="btn btn-ghost btn-full" onClick={handleWear}>
                 👕 Wearing this today

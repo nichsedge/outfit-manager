@@ -15,9 +15,15 @@ export default function AddItemView({ onDone }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>([]);
   const [name, setName] = useState('');
+  const [brand, setBrand] = useState('');
+  const [price, setPrice] = useState<string>('');
+  const [purchaseDate, setPurchaseDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState<Category | ''>('');
   const [color, setColor] = useState('#1a1a1a');
   const [tags, setTags] = useState<string[]>([]);
+  const [material, setMaterial] = useState('');
+  const [careInstructions, setCareInstructions] = useState('');
+  const [condition, setCondition] = useState<ClothingItem['condition']>('new');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
 
@@ -59,10 +65,17 @@ export default function AddItemView({ onDone }: Props) {
     const item: ClothingItem = {
       id: uuidv4(),
       name: name.trim(),
+      brand: brand.trim() || undefined,
+      price: price ? parseFloat(price) : undefined,
+      purchaseDate: purchaseDate ? new Date(purchaseDate).getTime() : undefined,
+      status: 'ready',
       category: category as Category,
       color,
       tags,
       images,
+      material: material.trim() || undefined,
+      careInstructions: careInstructions.trim() || undefined,
+      condition: condition || 'good',
       createdAt: Date.now(),
     };
     await addItem(item);
@@ -165,17 +178,97 @@ export default function AddItemView({ onDone }: Props) {
       </div>
 
       {/* Name */}
-      <div className="form-group">
-        <label className="form-label" htmlFor="item-name">Name</label>
-        <input
-          id="item-name"
-          className="form-input"
-          type="text"
-          placeholder="e.g. White Oxford Shirt"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          maxLength={60}
-        />
+      <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-3)' }}>
+        <div>
+          <label className="form-label" htmlFor="item-name">Name</label>
+          <input
+            id="item-name"
+            className="form-input"
+            type="text"
+            placeholder="e.g. White Oxford Shirt"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            maxLength={60}
+          />
+        </div>
+        <div>
+          <label className="form-label" htmlFor="item-brand">Brand</label>
+          <input
+            id="item-brand"
+            className="form-input"
+            type="text"
+            placeholder="Levi's"
+            value={brand}
+            onChange={e => setBrand(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-3)' }}>
+        <div>
+          <label className="form-label" htmlFor="item-price">Price ($)</label>
+          <input
+            id="item-price"
+            className="form-input"
+            type="number"
+            step="0.01"
+            placeholder="49.99"
+            value={price}
+            onChange={e => setPrice(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="form-label" htmlFor="item-date">Purchase Date</label>
+          <input
+            id="item-date"
+            className="form-input"
+            type="date"
+            value={purchaseDate}
+            onChange={e => setPurchaseDate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="form-label" htmlFor="item-condition">Condition</label>
+          <select 
+            id="item-condition" 
+            className="form-input" 
+            value={condition} 
+            onChange={e => setCondition(e.target.value as any)}
+            style={{ padding: '0 8px' }}
+          >
+            <option value="new">New</option>
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="fair">Fair</option>
+            <option value="poor">Poor</option>
+            <option value="needs-repair">Repair</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div>
+          <label className="form-label" htmlFor="item-material">Material</label>
+          <input
+            id="item-material"
+            className="form-input"
+            type="text"
+            placeholder="e.g. 100% Silk"
+            value={material}
+            onChange={e => setMaterial(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="form-label" htmlFor="item-care">Care</label>
+          <input
+            id="item-care"
+            className="form-input"
+            type="text"
+            placeholder="Hand wash only"
+            value={careInstructions}
+            onChange={e => setCareInstructions(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Category */}

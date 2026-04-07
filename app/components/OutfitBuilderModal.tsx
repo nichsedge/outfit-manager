@@ -27,9 +27,12 @@ export default function OutfitBuilderModal({ initialOutfit, onClose }: Props) {
     );
   };
 
-  const filteredItems = filterCat === 'all'
-    ? items
-    : items.filter(i => i.category === filterCat);
+  const filteredItems = items.filter(i => {
+    const isCatMatch = filterCat === 'all' || i.category === filterCat;
+    const isReady = i.status === 'ready';
+    const isAlreadySelected = selectedIds.includes(i.id);
+    return isCatMatch && (isReady || isAlreadySelected);
+  });
 
   const selectedItems = selectedIds
     .map(id => items.find(i => i.id === id))
