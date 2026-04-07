@@ -29,7 +29,7 @@ export interface Outfit {
   wearLogs?: number[];
 }
 
-export type ActiveTab = 'wardrobe' | 'outfits' | 'calendar' | 'add';
+export type ActiveTab = 'wardrobe' | 'outfits' | 'calendar' | 'add' | 'insights';
 
 export const CATEGORIES: { value: Category; label: string; emoji: string }[] = [
   { value: 'top', label: 'Top', emoji: '👕' },

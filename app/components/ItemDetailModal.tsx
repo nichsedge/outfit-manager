@@ -12,13 +12,14 @@ interface Props {
 }
 
 export default function ItemDetailModal({ item, onClose }: Props) {
-  const { deleteItem, updateItem } = useApp();
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showBuilder, setShowBuilder] = useState(false);
   const [editingName, setEditingName] = useState(false);
+  const [editingTags, setEditingTags] = useState(false);
   const [nameInput, setNameInput] = useState(item.name);
+  const { deleteItem, updateItem, tags: dynamicTags } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,6 +74,16 @@ export default function ItemDetailModal({ item, onClose }: Props) {
     await updateItem({ ...item, name: nameInput.trim() });
     setEditingName(false);
     setToast('✓ Item renamed');
+  };
+
+  const handleToggleTag = async (label: string) => {
+    const isActive = item.tags.includes(label);
+    const updatedTags = isActive 
+      ? item.tags.filter(t => t !== label) 
+      : [...item.tags, label];
+    
+    await updateItem({ ...item, tags: updatedTags });
+    setToast(isActive ? `− Tag removed: ${label}` : `+ Tag added: ${label}`);
   };
 
   if (showBuilder) {
@@ -297,13 +308,45 @@ export default function ItemDetailModal({ item, onClose }: Props) {
             </div>
 
             {/* Tags */}
-            {item.tags.length > 0 && (
-              <div className="item-detail__tags">
-                {item.tags.map(tag => (
-                  <span key={tag} className="tag-badge">{tag}</span>
-                ))}
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Style Tags</span>
+                <button 
+                  className="btn btn-ghost" 
+                  style={{ padding: '2px 8px', fontSize: 12, height: 'auto', minHeight: 'auto' }}
+                  onClick={() => setEditingTags(!editingTags)}
+                >
+                  {editingTags ? 'Close' : (item.tags.length > 0 ? 'Edit' : '+ Add')}
+                </button>
               </div>
-            )}
+              
+              {editingTags ? (
+                <div className="pill-group" style={{ marginBottom: 'var(--space-2)' }}>
+                  {dynamicTags.map(tag => (
+                    <button
+                      key={tag.id}
+                      className={`pill ${item.tags.includes(tag.label) ? 'active' : ''}`}
+                      onClick={() => handleToggleTag(tag.label)}
+                      style={{ fontSize: 12, padding: '4px 10px' }}
+                    >
+                      {tag.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                item.tags.length > 0 ? (
+                  <div className="item-detail__tags">
+                    {item.tags.map(tag => (
+                      <span key={tag} className="tag-badge">{tag}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic', margin: '4px 0' }}>
+                    No tags added yet.
+                  </p>
+                )
+              )}
+            </div>
 
             <div className="divider" />
 

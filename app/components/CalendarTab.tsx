@@ -161,7 +161,7 @@ export default function CalendarTab() {
 
       {selectedItem && (
         <ItemDetailModal 
-          item={selectedItem} 
+          item={items.find(i => i.id === selectedItem.id) || selectedItem} 
           onClose={() => setSelectedItem(null)} 
         />
       )}

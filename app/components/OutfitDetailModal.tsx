@@ -16,6 +16,29 @@ export default function OutfitDetailModal({ outfit, items, onClose, onEdit }: Pr
   const { deleteOutfit, updateOutfit } = useApp();
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(outfit.name);
+
+  const handleSaveName = async () => {
+    if (editedName.trim() === outfit.name) {
+      setIsEditingName(false);
+      return;
+    }
+    await updateOutfit({
+      ...outfit,
+      name: editedName.trim() || 'Untitled Outfit'
+    });
+    setIsEditingName(false);
+    setToast('✓ Name updated');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSaveName();
+    if (e.key === 'Escape') {
+      setEditedName(outfit.name);
+      setIsEditingName(false);
+    }
+  };
 
   const outfitItems = outfit.itemIds
     .map(id => items.find(i => i.id === id))
@@ -38,8 +61,27 @@ export default function OutfitDetailModal({ outfit, items, onClose, onEdit }: Pr
     <>
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-sheet animate-scale" onClick={e => e.stopPropagation()}>
-          <div className="modal-header">
-            <span className="modal-title">{outfit.name || 'Outfit'}</span>
+          <div className="modal-header" style={{ paddingBottom: isEditingName ? 8 : undefined }}>
+            {isEditingName ? (
+              <input
+                autoFocus
+                className="form-input"
+                style={{ fontSize: 16, fontWeight: 700, padding: '4px 12px', height: 36, margin: 0 }}
+                value={editedName}
+                onChange={e => setEditedName(e.target.value)}
+                onBlur={handleSaveName}
+                onKeyDown={handleKeyDown}
+              />
+            ) : (
+              <div 
+                className="modal-title" 
+                onClick={() => setIsEditingName(true)}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                {outfit.name || 'Untitled Outfit'}
+                <span style={{ fontSize: 12, opacity: 0.5 }}>✏️</span>
+              </div>
+            )}
             <button id="outfit-detail-close" className="modal-close" onClick={onClose}>✕</button>
           </div>
 

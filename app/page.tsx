@@ -6,6 +6,7 @@ import WardrobeView from './components/WardrobeView';
 import OutfitsView from './components/OutfitsView';
 import AddItemView from './components/AddItemView';
 import CalendarTab from './components/CalendarTab';
+import InsightsSection from './components/InsightsSection';
 import SettingsModal from './components/SettingsModal';
 import { ActiveTab } from './lib/types';
 
@@ -55,10 +56,18 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, overflowY: 'auto' }}>
         {activeTab === 'wardrobe' && <WardrobeView />}
         {activeTab === 'outfits' && <OutfitsView />}
         {activeTab === 'calendar' && <CalendarTab />}
+        {activeTab === 'insights' && (
+          <div className="page-content">
+            <div className="section-header">
+              <h2 className="section-title">Insights</h2>
+            </div>
+            <InsightsSection />
+          </div>
+        )}
         {activeTab === 'add' && <AddItemView onDone={() => setActiveTab('wardrobe')} />}
       </main>
 
@@ -78,15 +87,6 @@ export default function Home() {
         </button>
 
         <button
-          id="nav-add"
-          className="nav-btn nav-btn--add"
-          onClick={() => setActiveTab('add')}
-          aria-label="Add clothing item"
-        >
-          <span className="nav-btn__icon">+</span>
-        </button>
-
-        <button
           id="nav-outfits"
           className={`nav-btn ${activeTab === 'outfits' ? 'active' : ''}`}
           onClick={() => setActiveTab('outfits')}
@@ -95,6 +95,17 @@ export default function Home() {
           <span className="nav-btn__label">Outfits</span>
         </button>
 
+        <div className="nav-center-slot">
+          <button
+            id="nav-add"
+            className={`nav-btn nav-btn--add ${activeTab === 'add' ? 'active' : ''}`}
+            onClick={() => setActiveTab('add')}
+            aria-label="Add clothing item"
+          >
+            <span className="nav-btn__icon">+</span>
+          </button>
+        </div>
+
         <button
           id="nav-calendar"
           className={`nav-btn ${activeTab === 'calendar' ? 'active' : ''}`}
@@ -102,6 +113,15 @@ export default function Home() {
         >
           <span className="nav-btn__icon">📅</span>
           <span className="nav-btn__label">Log</span>
+        </button>
+
+        <button
+          id="nav-insights"
+          className={`nav-btn ${activeTab === 'insights' ? 'active' : ''}`}
+          onClick={() => setActiveTab('insights')}
+        >
+          <span className="nav-btn__icon">📊</span>
+          <span className="nav-btn__label">Stats</span>
         </button>
       </nav>
     </div>
